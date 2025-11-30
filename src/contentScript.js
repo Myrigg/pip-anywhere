@@ -26,13 +26,48 @@ function error(...args) {
  * Filters out non-HTMLVideoElement nodes defensively.
  */
 function getCandidateVideos() {
-  const nodeList = document.querySelectorAll('video');
-  const videos = Array.from(nodeList).filter(
-    el => el instanceof HTMLVideoElement
-  );
+  const collected = new Set();
+  const visitedDocuments = new Set();
+
+  function collectFromDocument(doc) {
+    if (!doc || visitedDocuments.has(doc)) return;
+    visitedDocuments.add(doc);
+
+    // Grab any <video> elements directly in this document.
+    const nodeList = doc.querySelectorAll('video');
+    Array.from(nodeList).forEach((el) => {
+      if (el instanceof HTMLVideoElement) {
+        collected.add(el);
+      }
+    });
+
+    // Recurse into shadow roots.
+    const allElements = doc.querySelectorAll('*');
+    allElements.forEach((el) => {
+      if (el.shadowRoot) {
+        collectFromDocument(el.shadowRoot);
+      }
+    });
+
+    // Recurse into same-origin iframes when permitted.
+    const frames = doc.querySelectorAll('iframe');
+    frames.forEach((frame) => {
+      try {
+        if (frame.contentDocument) {
+          collectFromDocument(frame.contentDocument);
+        }
+      } catch (err) {
+        // Cross-origin frames will throw; ignore them quietly.
+      }
+    });
+  }
+
+  collectFromDocument(document);
+
+  const videos = Array.from(collected);
 
   if (!videos.length) {
-    warn('No <video> elements found on this page.');
+    warn('No <video> elements found on this page (including frames/shadow DOM).');
     return [];
   }
 
