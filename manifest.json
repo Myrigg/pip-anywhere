@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "PiP Anywhere",
+  "description": "Force Picture-in-Picture mode on YouTube, Crunchyroll, and other video sites.",
+  "version": "1.0.0",
+
+  "action": {
+    "default_title": "Enable Picture-in-Picture"
+  },
+
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+
+  "background": {
+    "service_worker": "src/background.js"
+  },
+
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.youtube.com/*",
+        "https://www.crunchyroll.com/*",
+        "*://*/*"
+      ],
+      "js": ["src/contentScript.js"]
+    }
+  ]
+}
