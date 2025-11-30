@@ -31,7 +31,8 @@
         "https://www.crunchyroll.com/*",
         "https://www.netflix.com/*"
       ],
-      "js": ["src/contentScript.js"]
+      "js": ["src/contentScript.js"],
+      "all_frames": true
     }
   ],
 
