@@ -1,106 +1,103 @@
 # PiP Anywhere
 
-A lightweight Chrome/Chromium extension that lets you trigger **Picture-in-Picture** (PiP) mode on video sites including **YouTube**, **Crunchyroll**, and most HTML5 video players across the web.
+A lightweight Chromium extension that lets you trigger Picture-in-Picture (PiP) mode on supported video sites.
+Currently enabled for YouTube and Crunchyroll—the places where people most often want PiP and where video players tend to fight it.
 
-This extension uses **Manifest V3**, runs entirely client-side, and works with:
-- Google Chrome  
-- Brave  
-- Microsoft Edge  
-- Any Chromium-based browser that supports MV3  
+The extension uses Manifest V3, runs entirely client-side, and works on:
+
+- Google Chrome
+- Brave
+- Microsoft Edge
+- Any Chromium browser with MV3 support
 
 ---
 
 ## ✨ Features
 
-- One-click **Picture-in-Picture** via toolbar button  
-- Optional keyboard shortcut (default: `Ctrl+Shift+P` on Windows/Linux, `Command+Shift+P` on macOS)  
-- Works on most sites using `<video>` elements  
-- Automatically finds the main playing video  
-- Handles sites like Crunchyroll that disable PiP via `disablePictureInPicture`  
-- Clean code: Manifest V3 + background service worker + content script  
+- One-click Picture-in-Picture via the toolbar button
+- Optional keyboard shortcut (Ctrl+Shift+P on Windows/Linux, Command+Shift+P on macOS)
+- Automatically detects the main visible/playing video
+- Handles platforms that try to disable PiP (e.g., Crunchyroll)
+- Minimal permissions, MV3-compliant, clean architecture
 
 ---
 
 ## 🔧 Installation (Developer Mode)
 
-you can install it in **Developer Mode**.
+1. Download the repository ZIP:
+   Code → Download ZIP
 
-1. Download the repository ZIP:  
-   **Code → Download ZIP**
+2. Extract it somewhere convenient.
 
-2. Extract the ZIP to a folder.
+3. Open:
+   chrome://extensions
 
-3. Open Chrome and navigate to:  
-   `chrome://extensions`
+4. Enable Developer mode.
 
-4. Enable **Developer mode** (toggle in the top right).
+5. Click Load unpacked and select the folder containing manifest.json.
 
-5. Click **Load unpacked** and select the folder containing `manifest.json`.
+6. You’ll see PiP Anywhere appear in your extensions list.
 
-6. The extension should now appear as **PiP Anywhere**.
-
-Optional: Pin the icon via Chrome’s puzzle-piece menu for quick access.
+(Optional) Pin the icon using Chrome’s puzzle-piece menu.
 
 ---
 
 ## 🚀 Usage
 
 ### Toolbar Button
-- Go to any supported video site (YouTube, Crunchyroll, etc.)
-- Start playing a video
-- Click the **PiP Anywhere** toolbar icon
-- The video pops into Picture-in-Picture mode
+1. Go to YouTube or Crunchyroll
+2. Play any video
+3. Click the PiP Anywhere icon
+4. The video pops into Picture-in-Picture mode
 
 ### Keyboard Shortcut
-Default:
-- **Windows/Linux:** `Ctrl + Shift + P`
-- **macOS:** `Command + Shift + P`
+- Windows/Linux: Ctrl + Shift + P
+- macOS: Command + Shift + P
 
-You can change this at:  
-`chrome://extensions/shortcuts`
+You can customize this via:
+chrome://extensions/shortcuts
 
 ---
 
-## 🧠 How It Works (Technical Overview)
+## 🧠 How It Works
 
-**Content Script (`src/contentScript.js`)**
-- Runs on matching sites
-- Finds the main video:
-  - Prefers visible, currently playing videos  
-  - Falls back to the largest video element  
-- Removes `disablePictureInPicture` if present  
-- Calls `requestPictureInPicture()`  
-- Responds to messages from the background worker  
+### Content Script — src/contentScript.js
+Runs only on YouTube and Crunchyroll. It:
 
-**Background Service Worker (`src/background.js`)**
-- Listens for toolbar button clicks  
-- Sends a `TRIGGER_PIP` message to the active tab  
-- Handles keyboard shortcut commands  
+- Locates the main video on the page using a robust heuristic
+- Handles late-loading or DRM-wrapped video elements
+- Removes disablePictureInPicture when needed
+- Requests PiP
+- Responds to messages from the background worker
 
-**Manifest (`manifest.json`)**
-- Defines MV3 extension metadata  
-- Registers content scripts  
-- Registers the background service worker  
-- Defines the PiP trigger command  
-- Grants minimal required permissions  
+### Background Service Worker — src/background.js
+- Listens for toolbar clicks and keyboard shortcut commands
+- Sends a TRIGGER_PIP message to the active tab
+- Guarantees the PiP request happens within a user-gesture context
+
+### Manifest — manifest.json
+- Defines MV3 metadata
+- Limits content script injection to YouTube + Crunchyroll
+- Minimizes permissions (activeTab, tabs)
+- Registers the background worker and PiP command
 
 ---
 
 ## 🧪 Known Limitations
 
-- Some DRM-protected video players may still block PiP even after removing `disablePictureInPicture`.
-- Pages without `<video>` elements will show a console message but otherwise behave normally.
-- Some sites use multiple nested iframes; `all_frames: true` helps, but rare cases may require site-specific logic.
+- Only runs automatically on YouTube and Crunchyroll.
+- DRM-heavy players may still block PiP even if the UI suggests otherwise.
+- Sites outside the supported list won’t trigger PiP unless future versions add an opt-in allowlist.
 
 ---
 
 ## 📜 License
 
-MIT License  
-Feel free to modify, extend, or reuse.
+MIT License.
+Fork freely—extend, improve, experiment.
 
 ---
 
 ## ❤️ Contributions
 
-Pull requests and suggestions are welcome!
+Feedback and pull requests are welcome.
