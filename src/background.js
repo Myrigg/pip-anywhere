@@ -49,8 +49,8 @@ chrome.action.onClicked.addListener(() => {
   triggerPiPInActiveTab();
 });
 
-// (Future) Handle keyboard shortcuts (commands)
-// We'll define the command in manifest.json in a later step.
+// Handle keyboard shortcut commands defined in manifest.json.
+// Users can press Ctrl/Cmd+Shift+P (default) to trigger PiP on the active tab.
 chrome.commands?.onCommand.addListener((command) => {
   if (command === 'trigger-pip') {
     triggerPiPInActiveTab();
