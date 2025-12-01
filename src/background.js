@@ -1,13 +1,9 @@
 // Background service worker for PiP Anywhere
-// Listens for toolbar button clicks (and later keyboard shortcuts)
-// and tells the content script in the active tab to trigger PiP.
+// Triggers Picture-in-Picture on the "main" video in the active tab.
 
-/**
- * Send a TRIGGER_PIP message to the active tab.
- */
+// Core logic: run in the page context via chrome.scripting.executeScript
 async function triggerPiPInActiveTab() {
   try {
-    // Find the active tab in the current window
     const [tab] = await chrome.tabs.query({
       active: true,
       currentWindow: true
@@ -19,46 +15,148 @@ async function triggerPiPInActiveTab() {
     }
 
     console.debug(
-      '[PiP Anywhere][debug] Sending TRIGGER_PIP message to tab:',
+      '[PiP Anywhere][debug] Triggering PiP in tab:',
       tab.id,
       tab.url
     );
 
-    // Send a message to the content script in this tab
-    chrome.tabs.sendMessage(
-      tab.id,
-      { type: 'TRIGGER_PIP' },
-      (response) => {
-        if (chrome.runtime.lastError) {
-          // This happens if there is no content script on the page
-          console.warn(
-            '[PiP Anywhere][debug] Could not contact content script:',
-            chrome.runtime.lastError.message
+    // Inject into all frames; only frames with <video> elements will do anything
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id, allFrames: true },
+      world: 'MAIN', // page world, so requestPictureInPicture() sees user gesture
+      func: () => {
+        try {
+          const debugPrefix = '[PiP Anywhere][debug]';
+
+          const videos = Array.from(document.querySelectorAll('video'));
+
+          if (!videos.length) {
+            console.warn(`${debugPrefix} No <video> elements found on this page.`);
+            return;
+          }
+
+          console.debug(`${debugPrefix} Found ${videos.length} <video> elements.`);
+
+          // Filter to visible videos
+          const visibleVideos = videos.filter((video, index) => {
+            const rect = video.getBoundingClientRect();
+            const visible = rect.width > 0 && rect.height > 0;
+            if (visible) {
+              console.debug(`${debugPrefix} Visible video details`, {
+                index,
+                rect,
+                videoWidth: video.videoWidth,
+                videoHeight: video.videoHeight,
+                paused: video.paused,
+                readyState: video.readyState
+              });
+            }
+            return visible;
+          });
+
+          const candidates = visibleVideos.length ? visibleVideos : videos;
+          console.debug(
+            `${debugPrefix} Visible videos: ${visibleVideos.length}; All candidates: ${candidates.length}`
           );
-          return;
-        }
 
-        console.debug('[PiP Anywhere][debug] Content script response:', response);
+          // Prefer videos that are actually playing
+          const playingVideos = candidates.filter((video) => {
+            return !video.paused && !video.ended && video.readyState >= 2;
+          });
 
-        if (!response || !response.success) {
-          console.warn('[PiP Anywhere][debug] Content script reported PiP failure.');
-        } else {
-          console.log('[PiP Anywhere][debug] PiP triggered successfully.');
+          const listToUse = playingVideos.length ? playingVideos : candidates;
+          console.debug(
+            `${debugPrefix} Playing videos: ${playingVideos.length}; Using list length: ${listToUse.length}`
+          );
+
+          if (!listToUse.length) {
+            console.warn(`${debugPrefix} No suitable videos to use for PiP.`);
+            return;
+          }
+
+          // Choose the "largest" video by resolution; fallback to client size
+          const mainVideo = listToUse.reduce((largest, video) => {
+            if (!largest) return video;
+
+            const largestArea =
+              (largest.videoWidth || largest.clientWidth || 0) *
+              (largest.videoHeight || largest.clientHeight || 0);
+
+            const currentArea =
+              (video.videoWidth || video.clientWidth || 0) *
+              (video.videoHeight || video.clientHeight || 0);
+
+            return currentArea > largestArea ? video : largest;
+          }, null);
+
+          if (!mainVideo) {
+            console.warn(`${debugPrefix} Could not determine a main video element.`);
+            return;
+          }
+
+          console.debug(`${debugPrefix} Selected main video`, {
+            videoWidth: mainVideo.videoWidth,
+            videoHeight: mainVideo.videoHeight,
+            clientWidth: mainVideo.clientWidth,
+            clientHeight: mainVideo.clientHeight,
+            rect: mainVideo.getBoundingClientRect(),
+            paused: mainVideo.paused,
+            readyState: mainVideo.readyState
+          });
+
+          // Check PiP support
+          if (!('pictureInPictureEnabled' in document) || !document.pictureInPictureEnabled) {
+            console.warn(`${debugPrefix} Picture-in-Picture is not enabled in this browser.`);
+            return;
+          }
+
+          // If some OTHER video is already in PiP, exit first
+          if (document.pictureInPictureElement && document.pictureInPictureElement !== mainVideo) {
+            console.debug(`${debugPrefix} Exiting existing Picture-in-Picture first.`);
+            try {
+              document.exitPictureInPicture();
+            } catch (e) {
+              console.warn(`${debugPrefix} Failed to exit existing Picture-in-Picture:`, e);
+            }
+          }
+
+          // Some sites (Crunchyroll, etc.) explicitly disable PiP
+          if (mainVideo.hasAttribute('disablePictureInPicture')) {
+            console.warn(
+              `${debugPrefix} Video has disablePictureInPicture attribute, attempting to remove it.`
+            );
+            mainVideo.removeAttribute('disablePictureInPicture');
+          }
+
+          // Try to request PiP
+          mainVideo
+            .requestPictureInPicture()
+            .then(() => {
+              console.debug(`${debugPrefix} Picture-in-Picture started.`);
+            })
+            .catch((error) => {
+              console.error(
+                `${debugPrefix} Failed to start Picture-in-Picture:`,
+                error
+              );
+            });
+        } catch (err) {
+          console.error('[PiP Anywhere][debug] Error inside injected PiP function:', err);
         }
       }
-    );
+    });
   } catch (error) {
     console.error('[PiP Anywhere][debug] Failed to trigger PiP in active tab:', error);
   }
 }
 
-// Handle toolbar button click
+// Toolbar button
 chrome.action.onClicked.addListener(() => {
   console.debug('[PiP Anywhere][debug] Browser action clicked, triggering PiP.');
   triggerPiPInActiveTab();
 });
 
-// Handle keyboard shortcuts (commands)
+// Keyboard shortcut
 chrome.commands?.onCommand.addListener((command) => {
   if (command === 'trigger-pip') {
     console.debug('[PiP Anywhere][debug] Command "trigger-pip" received.');
