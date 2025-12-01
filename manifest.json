@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "PiP Anywhere",
-  "description": "One-click Picture-in-Picture on any website with a video. Works wherever the browser allows — no fixed site list required.",
-  "version": "3.0.0",
+  "description": "Force Picture-in-Picture on the main video element of any page, wherever the browser allows it.",
+  "version": "3.1.0",
 
   "action": {
     "default_title": "Enable Picture-in-Picture"
@@ -15,28 +15,19 @@
     "128": "icons/icon128.png"
   },
 
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+
   "permissions": [
-    "activeTab",
     "scripting",
-    "tabs"
+    "tabs",
+    "activeTab"
   ],
 
   "host_permissions": [
-    "*://*/*"
-  ],
-
-  "background": {
-    "service_worker": "src/background.js"
-  },
-
-  "content_scripts": [
-    {
-      "matches": [
-        "*://*/*"
-      ],
-      "js": ["src/contentScript.js"],
-      "all_frames": true
-    }
+    "<all_urls>"
   ],
 
   "commands": {
