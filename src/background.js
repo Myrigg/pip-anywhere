@@ -14,9 +14,15 @@ async function triggerPiPInActiveTab() {
     });
 
     if (!tab || !tab.id) {
-      console.warn('[PiP Anywhere] No active tab found.');
+      console.warn('[PiP Anywhere][debug] No active tab found.');
       return;
     }
+
+    console.debug(
+      '[PiP Anywhere][debug] Sending TRIGGER_PIP message to tab:',
+      tab.id,
+      tab.url
+    );
 
     // Send a message to the content script in this tab
     chrome.tabs.sendMessage(
@@ -26,32 +32,36 @@ async function triggerPiPInActiveTab() {
         if (chrome.runtime.lastError) {
           // This happens if there is no content script on the page
           console.warn(
-            '[PiP Anywhere] Could not contact content script:',
+            '[PiP Anywhere][debug] Could not contact content script:',
             chrome.runtime.lastError.message
           );
           return;
         }
 
+        console.debug('[PiP Anywhere][debug] Content script response:', response);
+
         if (!response || !response.success) {
-          console.warn('[PiP Anywhere] Content script reported PiP failure.');
+          console.warn('[PiP Anywhere][debug] Content script reported PiP failure.');
         } else {
-          console.log('[PiP Anywhere] PiP triggered successfully.');
+          console.log('[PiP Anywhere][debug] PiP triggered successfully.');
         }
       }
     );
   } catch (error) {
-    console.error('[PiP Anywhere] Failed to trigger PiP in active tab:', error);
+    console.error('[PiP Anywhere][debug] Failed to trigger PiP in active tab:', error);
   }
 }
 
 // Handle toolbar button click
 chrome.action.onClicked.addListener(() => {
+  console.debug('[PiP Anywhere][debug] Browser action clicked, triggering PiP.');
   triggerPiPInActiveTab();
 });
 
 // Handle keyboard shortcuts (commands)
 chrome.commands?.onCommand.addListener((command) => {
   if (command === 'trigger-pip') {
+    console.debug('[PiP Anywhere][debug] Command "trigger-pip" received.');
     triggerPiPInActiveTab();
   }
 });
