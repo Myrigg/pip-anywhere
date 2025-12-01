@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "PiP Anywhere",
-  "description": "Force Picture-in-Picture on the main video element of any page, wherever the browser allows it.",
+  "description": "Force Picture-in-Picture on the main video of the current page wherever the browser allows it.",
   "version": "3.1.0",
 
   "action": {
@@ -16,8 +16,7 @@
   },
 
   "background": {
-    "service_worker": "background.js",
-    "type": "module"
+    "service_worker": "background.js"
   },
 
   "permissions": [

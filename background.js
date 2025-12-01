@@ -1,7 +1,6 @@
 // Background service worker for PiP Anywhere
 // Triggers Picture-in-Picture on the "main" video in the active tab.
 
-// Core logic: run in the page context via chrome.scripting.executeScript
 async function triggerPiPInActiveTab() {
   try {
     const [tab] = await chrome.tabs.query({
@@ -20,10 +19,9 @@ async function triggerPiPInActiveTab() {
       tab.url
     );
 
-    // Inject into all frames; only frames with <video> elements will do anything
     await chrome.scripting.executeScript({
       target: { tabId: tab.id, allFrames: true },
-      world: 'MAIN', // page world, so requestPictureInPicture() sees user gesture
+      world: 'MAIN', // run in the page context
       func: () => {
         try {
           const debugPrefix = '[PiP Anywhere][debug]';
@@ -59,7 +57,7 @@ async function triggerPiPInActiveTab() {
             `${debugPrefix} Visible videos: ${visibleVideos.length}; All candidates: ${candidates.length}`
           );
 
-          // Prefer videos that are actually playing
+          // Prefer playing videos
           const playingVideos = candidates.filter((video) => {
             return !video.paused && !video.ended && video.readyState >= 2;
           });
@@ -74,7 +72,7 @@ async function triggerPiPInActiveTab() {
             return;
           }
 
-          // Choose the "largest" video by resolution; fallback to client size
+          // Choose the "largest" video by resolution, fallback to client size
           const mainVideo = listToUse.reduce((largest, video) => {
             if (!largest) return video;
 
@@ -110,7 +108,7 @@ async function triggerPiPInActiveTab() {
             return;
           }
 
-          // If some OTHER video is already in PiP, exit first
+          // If some other video is already in PiP, exit first
           if (document.pictureInPictureElement && document.pictureInPictureElement !== mainVideo) {
             console.debug(`${debugPrefix} Exiting existing Picture-in-Picture first.`);
             try {
@@ -120,7 +118,7 @@ async function triggerPiPInActiveTab() {
             }
           }
 
-          // Some sites (Crunchyroll, etc.) explicitly disable PiP
+          // Remove site-level PiP blocking if present (Crunchyroll etc.)
           if (mainVideo.hasAttribute('disablePictureInPicture')) {
             console.warn(
               `${debugPrefix} Video has disablePictureInPicture attribute, attempting to remove it.`
@@ -128,7 +126,7 @@ async function triggerPiPInActiveTab() {
             mainVideo.removeAttribute('disablePictureInPicture');
           }
 
-          // Try to request PiP
+          // Finally, request PiP
           mainVideo
             .requestPictureInPicture()
             .then(() => {
