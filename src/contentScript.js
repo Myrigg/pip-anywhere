@@ -148,15 +148,11 @@ async function requestPiPForVideo(video) {
     console.log('[PiP Anywhere][debug] Picture-in-Picture started.');
     return true;
   } catch (error) {
-    console.error(
-      '[PiP Anywhere][debug] Failed to start Picture-in-Picture:',
+    console.error('[PiP Anywhere][debug] Failed to start Picture-in-Picture:', error, {
+      name: error?.name,
+      message: error?.message,
       error
-      {
-        name: error?.name,
-        message: error?.message,
-        error
-      }
-    );
+    });
     return false;
   }
 }
