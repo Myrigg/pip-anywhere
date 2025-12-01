@@ -1,90 +1,40 @@
-# PiP Anywhere  
-A lightweight Chromium extension that forces Picture-in-Picture (PiP) mode on any website that contains a video element. One click or one shortcut pops the main video out into a floating window—even on sites that try to block it.
+# PiP Anywhere
 
-The extension aims to provide PiP **everywhere the browser allows it**, without maintaining a giant domain list.
+Force Picture-in-Picture (PiP) on the main video element of any page where the
+browser allows it — no hardcoded site list, no per-site hacks.
 
----
+## Features
 
-## ✨ Features
+- One-click / one-shortcut PiP on any page with a `<video>`
+- Smart main-video detection:
+  - Prefers visible videos
+  - Prefers currently playing videos
+  - Breaks ties by largest resolution
+- Works on YouTube, Crunchyroll, and most other HTML5 players
+- Ignores pages with no video instead of throwing errors
 
-- One-click PiP using the toolbar button  
-- Global keyboard shortcut  
-  - Windows/Linux: **Ctrl + Shift + P**  
-  - macOS: **Command + Shift + P**  
-- Works on YouTube, Crunchyroll, Netflix, and many others  
-- Automatically identifies the main video on the page  
-- Removes PiP-blocking attributes from videos  
-- Minimal permissions (Manifest V3)  
-- Background worker guarantees PiP is triggered with a valid user gesture
+## Installation (Developer Mode)
 
----
+1. Clone or download this folder
+2. Open `chrome://extensions`
+3. Enable **Developer mode**
+4. Click **Load unpacked**
+5. Select the folder containing `manifest.json`
 
-## 🧠 How It Works
+Pin the icon for quick access.
 
-### Background Service Worker — `src/background.js`
-Listens for:
-- Toolbar icon clicks  
-- Keyboard shortcut commands  
+## Usage
 
-When triggered, it sends a `TRIGGER_PIP` message to the active tab.  
-It gracefully handles pages where no content script is injected.
+- Click the **PiP Anywhere** toolbar icon  
+- Or use the keyboard shortcut (default: `Ctrl+Shift+P`, macOS: `⌘+Shift+P`)  
+- If a suitable video is visible on the active tab, it will enter Picture-in-Picture
 
-### Content Script — `src/contentScript.js`
-Injected into supported sites. It:
+## Known Limitations
 
-- Finds all `<video>` elements  
-- Picks the primary video (largest, visible, currently playing)  
-- Removes `disablePictureInPicture` when present  
-- Attempts `video.requestPictureInPicture()`  
-- Returns success/failure status to the background worker  
+- Sites with heavy DRM may block PiP entirely; the extension cannot bypass this
+- If you trigger PiP before a site has created its `<video>` element
+  (e.g. just after navigation on a SPA), you might need to click again once playback starts
 
-### Manifest — `manifest.json`
-Defines:
-- MV3 structure  
-- PiP command and icons  
-- Script injection rules  
-- Permissions (`activeTab`, `tabs`)  
-- Background service worker
+## License
 
----
-
-## 🔧 Installation (Developer Mode)
-
-1. Download or clone the repository  
-2. Open **chrome://extensions**  
-3. Enable **Developer mode**  
-4. Click **Load unpacked**  
-5. Select the folder containing `manifest.json`  
-
-Optionally pin the toolbar icon for quicker access.
-
----
-
-## 🚀 Usage
-
-### Toolbar Button
-Click the PiP Anywhere icon on any page with a video to instantly start Picture-in-Picture.
-
-### Keyboard Shortcut
-Use the global shortcut:
-
-- **Ctrl + Shift + P** (Windows/Linux)  
-- **Command + Shift + P** (macOS)
-
-Customize shortcuts here:  
-**chrome://extensions/shortcuts**
-
----
-
-## ⚠️ Known Limitations
-
-- Some DRM-locked players may still block PiP entirely  
-- Auto-injection only occurs on domains listed in `content_scripts.matches`  
-- Triggering PiP on pages with no videos simply does nothing  
-
----
-
-## ❤️ Contributing
-
-Feedback and pull requests are welcome.  
-Experiment, tweak, extend—make PiP work the way you want everywhere the browser permits.
+Do whatever sensible thing you like with it. Enjoy your floating anime / lectures / cat videos.
