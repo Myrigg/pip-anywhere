@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "PiP Anywhere",
   "description": "One-click Picture-in-Picture on any website with a video. Works wherever the browser allows — no fixed site list required.",
-  "version": "2.0.0",
+  "version": "3.0.0",
 
   "action": {
     "default_title": "Enable Picture-in-Picture"
@@ -17,6 +17,7 @@
 
   "permissions": [
     "activeTab",
+    "scripting",
     "tabs"
   ],
 
@@ -27,9 +28,7 @@
   "content_scripts": [
     {
       "matches": [
-        "https://www.youtube.com/*",
-        "https://www.crunchyroll.com/*",
-        "https://www.netflix.com/*"
+        "*://*/*"
       ],
       "js": ["src/contentScript.js"],
       "all_frames": true
