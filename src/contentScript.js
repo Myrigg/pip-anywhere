@@ -75,6 +75,24 @@ function getCandidateVideos() {
 }
 
 /**
+ * Basic on-page video collection without traversing frames/shadow roots.
+ * Mirrors the simpler logic from the earlier working version so we have
+ * another way to locate videos.
+ */
+function getSimpleCandidateVideos() {
+  const videos = Array.from(document.querySelectorAll('video')).filter(
+    (el) => el instanceof HTMLVideoElement
+  );
+
+  if (!videos.length) {
+    warn('No <video> elements found via simple querySelectorAll.');
+    return [];
+  }
+
+  return videos;
+}
+
+/**
  * Compute an "area score" for a video element to decide which is most likely
  * the main player.
  *
@@ -165,6 +183,48 @@ function findMainVideo() {
 }
 
 /**
+ * Legacy/alternate main video finder that mirrors the earlier version of
+ * the extension. This provides a fallback strategy alongside the more
+ * exhaustive frame/shadow DOM search.
+ */
+function findMainVideoFallback() {
+  const videos = getSimpleCandidateVideos();
+  if (!videos.length) {
+    return null;
+  }
+
+  // Filter to visible videos only
+  const visibleVideos = videos.filter((video) => {
+    const rect = video.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
+  });
+
+  const candidates = visibleVideos.length ? visibleVideos : videos;
+
+  // Prefer currently playing videos
+  const playingVideos = candidates.filter((video) => {
+    const isPlaying = !video.paused && !video.ended && video.readyState >= 2;
+    return isPlaying;
+  });
+
+  const listToUse = playingVideos.length ? playingVideos : candidates;
+
+  // Choose the largest by resolution
+  const mainVideo = listToUse.reduce((largest, video) => {
+    const largestArea =
+      (largest?.videoWidth || 0) * (largest?.videoHeight || 0);
+    const currentArea = (video.videoWidth || 0) * (video.videoHeight || 0);
+    return currentArea > largestArea ? video : largest;
+  }, null);
+
+  if (!mainVideo) {
+    warn('Could not determine a main video element via fallback strategy.');
+  }
+
+  return mainVideo;
+}
+
+/**
  * Try to make a given <video> enter Picture-in-Picture.
  * Returns a boolean success flag.
  *
@@ -216,7 +276,13 @@ async function requestPiPForMainVideo() {
     return true;
   }
 
-  const video = findMainVideo();
+  let video = findMainVideo();
+
+  // Fallback to the legacy detection logic if the exhaustive search fails.
+  if (!video) {
+    log('Falling back to legacy video detection logic.');
+    video = findMainVideoFallback();
+  }
 
   if (!video) {
     warn('Could not find a suitable video for PiP.');
