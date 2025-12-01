@@ -49,8 +49,7 @@ chrome.action.onClicked.addListener(() => {
   triggerPiPInActiveTab();
 });
 
-// (Future) Handle keyboard shortcuts (commands)
-// We'll define the command in manifest.json in a later step.
+// Handle keyboard shortcuts (commands)
 chrome.commands?.onCommand.addListener((command) => {
   if (command === 'trigger-pip') {
     triggerPiPInActiveTab();
