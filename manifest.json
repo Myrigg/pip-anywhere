@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "PiP Anywhere",
   "description": "Watch video in Picture-in-Picture on any site. Automatically picks the main visible video on the page.",
-  "version": "3.2.0",
+  "version": "3.3.0",
 
   "icons": {
     "16": "assets/icon16.png",
@@ -24,12 +24,18 @@
   },
 
   "permissions": [
+    "activeTab",
     "scripting"
   ],
 
-  "host_permissions": [
+  "optional_host_permissions": [
     "<all_urls>"
   ],
+
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": false
+  },
 
   "commands": {
     "trigger-pip": {
