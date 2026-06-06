@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PiP Anywhere — Options</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      margin: 0;
+      padding: 20px;
+      min-width: 320px;
+      max-width: 460px;
+    }
+    h1 { font-size: 16px; margin: 0 0 4px; }
+    p.sub { margin: 0 0 18px; opacity: 0.75; }
+    .row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px;
+      border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+      border-radius: 10px;
+    }
+    .row input { margin-top: 3px; width: 16px; height: 16px; }
+    .row label { font-weight: 600; }
+    .row .desc { font-weight: 400; opacity: 0.8; margin-top: 2px; }
+    #status { margin-top: 12px; min-height: 1.2em; font-size: 13px; opacity: 0.85; }
+  </style>
+</head>
+<body>
+  <h1>PiP Anywhere</h1>
+  <p class="sub">By default the extension only touches the tab you trigger it on.</p>
+
+  <div class="row">
+    <input type="checkbox" id="allFrames" />
+    <div>
+      <label for="allFrames">Allow Picture-in-Picture on embedded (cross-origin iframe) videos</label>
+      <div class="desc">
+        Grants access to all sites so PiP can reach videos that live inside an
+        embedded player from another domain. Most sites (YouTube, etc.) work
+        without this. You can turn it off again any time.
+      </div>
+    </div>
+  </div>
+
+  <div id="status" role="status" aria-live="polite"></div>
+
+  <script src="options.js"></script>
+</body>
+</html>
